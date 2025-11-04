@@ -1,0 +1,32 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # If using self-hosted SonarQube:
+          # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: Run custom “sq” CLI to report PR status
+        # Ensure script is executable or invoke via bash
+        run: |
+          chmod +x ./sonar-api.sh
+          ./sonar-api.sh lucianobustos_sonarqube-cli ${{ github.event.pull_request.number }} status --json
+        env:
+          SONAR_HOST: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
