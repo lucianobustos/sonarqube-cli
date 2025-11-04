@@ -19,14 +19,22 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          # If using self-hosted SonarQube:
-          # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  # if self-hosted
 
-      - name: Run custom “sq” CLI to report PR status
-        # Ensure script is executable or invoke via bash
+      - name: Run PR status check (on pull_request)
+        if: github.event_name == 'pull_request'
         run: |
           chmod +x ./sonar-api.sh
           ./sonar-api.sh lucianobustos_sonarqube-cli ${{ github.event.pull_request.number }} status --json
+        env:
+          SONAR_HOST: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Run project overview (on push to main)
+        if: github.event_name == 'push' && contains(github.ref, 'refs/heads/main')
+        run: |
+          chmod +x ./sonar-api.sh
+          ./sonar-api.sh lucianobustos_sonarqube-cli --json
         env:
           SONAR_HOST: https://sonarcloud.io
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
